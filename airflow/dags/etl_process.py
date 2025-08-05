@@ -2,7 +2,21 @@ import datetime
 
 from airflow.decorators import dag, task
 
-markdown_text = """"""
+markdown_text = """
+### ETL para datos de Empresa Línea 216 S.A.T. en base a información de ACTrans
+
+Este DAG extrae la información de un archivo Excel en Google Drive donde cada hoja
+contiene los datos entre 2020 y 2025 de cada línea de la Empresa Línea 216 S.A.T.
+
+Procesa los datos imputando valores nulos, eliminando outliers por la mediana, y guardando
+el preprocesamiento en archivos CSV (uno por cada línea) en un bucket de S3
+
+Luego separa cada CSV en entrenamiento y test, en proporciones 80/20 teniendo en cuenta
+que al ser series temporales la separación debe ser partir de una fecha de manera ordenada.
+
+Además, solo se tienen en cuenta los datos a partir del 01/01/2022 para excluir datos atípicos
+ocurridos durante la pandemia de COVID-19.
+"""
 
 default_args = {
     'owner': "Bernardo Maximiliano José, Tacchella Alejandro Nicolás",
@@ -32,9 +46,6 @@ def process_etl_actrans_data():
         system_site_packages=True
     )
     def get_dataset():
-        """
-        Load the raw data from UCI repository
-        """
         import awswrangler as wr
         import gdown
 

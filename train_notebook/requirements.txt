@@ -1,0 +1,6 @@
+awswrangler[openpyxl]==3.6.0
+mlflow>=3.1
+neuralprophet
+pandas>=2.0
+optuna
+scikit-learn>=1.3
