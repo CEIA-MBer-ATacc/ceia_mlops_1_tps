@@ -1,5 +1,3 @@
-import mlflow 
-
 from neuralprophet import NeuralProphet
 from sklearn.metrics import mean_absolute_error
 
@@ -23,15 +21,15 @@ def champion_callback(study, frozen_trial):
         else:
             print(f"Initial trial {frozen_trial.number} achieved value: {frozen_trial.value}")
 
-def objective(trial, df_train, df_test, regresores):
+def objective(trial, df_train, df_test, epochs, batch_size, regresores):
     model = NeuralProphet(
         n_changepoints=trial.suggest_int("n_changepoints", 10, 50),
         trend_reg=trial.suggest_float("trend_reg", 0.1, 10.0),
         learning_rate=trial.suggest_float("learning_rate", 0.001, 0.01, log=True),
         seasonality_mode=trial.suggest_categorical
         ("seasonality_mode", ["additive", "multiplicative"]),
-        epochs=100,
-        batch_size=128,
+        epochs=epochs,
+        batch_size=batch_size,
     )
 
     # Agregar regresores externos
