@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from config import settings
+
+from app.config import settings
 from app.routers.linea import linea_router
 
 app = FastAPI(title="Fast API service")

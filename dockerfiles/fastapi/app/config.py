@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from os import getenv
 from pydantic_settings import BaseSettings
 
-load_dotenv(dotenv_path=".env_dev")
+load_dotenv()
 
 class Config(BaseSettings):
     """Configuration settings for the FastAPI service."""

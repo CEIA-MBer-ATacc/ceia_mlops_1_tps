@@ -2,7 +2,7 @@ from app.schemas.linea import LineaInput, LineaOutput
 from app.services.linea import Linea
 from fastapi import APIRouter, status
 
-linea_router = APIRouter(prefix="linea", tags=["Linea"])
+linea_router = APIRouter(prefix="/linea", tags=["Linea"])
 
 
 @linea_router.post(
