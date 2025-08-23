@@ -160,6 +160,6 @@ def process_etl_actrans_data():
             wr.s3.to_csv(df=df_test, path=test_data_path.format(linea), index=False)
 
 
-    get_data() >> process_data() >> split_dataset()
+    get_dataset() >> process_dataset() >> split_dataset()
 
 etl_actrans_data_dag = process_etl_actrans_data()

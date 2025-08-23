@@ -135,7 +135,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .envrc
 .venv
 env/
@@ -208,3 +207,6 @@ __marimo__/
 
 # PyTorch Lightning logs
 lightning_logs/
+
+# Airflow logs
+airflow/logs
