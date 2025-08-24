@@ -42,9 +42,9 @@
 | Servicio      | URL                                            | Descripción                                    | Credenciales          |
 | ------------- | ---------------------------------------------- | ---------------------------------------------- | --------------------- |
 | **FastAPI**   | [http://localhost:8800](http://localhost:8800) | API REST y Swagger UI                           | -                     |
-| **Airflow**   | [http://localhost:8080](http://localhost:8080) | Orquestador de pipelines de datos              | admin/admin           |
+| **Airflow**   | [http://localhost:8080](http://localhost:8080) | Orquestador de pipelines de datos              | airflow/airflow           |
 | **MLflow**    | [http://localhost:5001](http://localhost:5001) | Tracking de experimentos y métricas           | -                     |
-| **MinIO**     | [http://localhost:9001](http://localhost:9001) | Consola de almacenamiento tipo S3             | minioadmin/minioadmin |
+| **MinIO**     | [http://localhost:9001](http://localhost:9001) | Consola de almacenamiento tipo S3             | minio/minio123 |
 
 ---
 

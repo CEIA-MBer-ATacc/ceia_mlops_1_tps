@@ -209,4 +209,4 @@ __marimo__/
 lightning_logs/
 
 # Airflow logs
-airflow/logs
+airflow/logs/
