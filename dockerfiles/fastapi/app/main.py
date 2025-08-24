@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 
 from app.config import settings
-from app.routers.linea import linea_router
+from app.routers.line import line_router
 
 app = FastAPI(title="Fast API service")
 
 app.include_router(
-    linea_router
+    line_router
 )
 
 @app.get("/")

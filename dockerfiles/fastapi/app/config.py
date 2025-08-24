@@ -9,12 +9,12 @@ load_dotenv()
 class Config(BaseSettings):
     """Configuration settings for the FastAPI service."""
 
-    # Service settings defaults
+    # Default service settings
     service_name: str = "FastAPI-service"
     build_version: str = "1.0.0"
 
     MODEL: str = getenv("MODEL", default="")
-    DIAS_PREDECIDOS: int = getenv("DIAS_PREDECIDOS", default=30)
+    PREDICTED_DAYS: int = getenv("PREDICTED_DAYS", default=30)
     AWS_BUCKET_NAME: str = getenv("AWS_BUCKET_NAME", default="")
     AWS_OBJECT_KEY: str = getenv("AWS_OBJECT_KEY", default="")
     AWS_ENDPOINT_URL_S3: str = getenv("AWS_ENDPOINT_URL_S3", default="")
