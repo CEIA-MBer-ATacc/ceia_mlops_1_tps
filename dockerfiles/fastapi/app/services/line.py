@@ -16,8 +16,6 @@ class Line:
     @staticmethod
     async def predict_by_line(line: LineInput) -> LineOutput:
         try:
-            # Line validation
-            Line._check_valid_line(line.line)
             mlflow.set_tracking_uri('http://mlflow:5000')
             model_name = Line._MODEL.format(line=line.line)
 

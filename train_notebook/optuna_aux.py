@@ -21,27 +21,28 @@ def champion_callback(study, frozen_trial):
         else:
             print(f"Initial trial {frozen_trial.number} achieved value: {frozen_trial.value}")
 
-def objective(trial, df_train, df_test, epochs, batch_size, regresores):
+def objective(trial, df_train, df_test, epochs, batch_size, regressors):
     model = NeuralProphet(
         n_changepoints=trial.suggest_int("n_changepoints", 10, 50),
         trend_reg=trial.suggest_float("trend_reg", 0.1, 10.0),
         learning_rate=trial.suggest_float("learning_rate", 0.001, 0.01, log=True),
-        seasonality_mode=trial.suggest_categorical
-        ("seasonality_mode", ["additive", "multiplicative"]),
+        seasonality_mode=trial.suggest_categorical(
+            "seasonality_mode", ["additive", "multiplicative"]
+        ),
         epochs=epochs,
         batch_size=batch_size,
     )
 
-    # Agregar regresores externos
-    for reg in regresores:
+    # Add external regressors
+    for reg in regressors:
         model.add_future_regressor(reg)
 
-    # Entrenar modelo
+    # Train model
     model.fit(df_train, freq='D', metrics=True, early_stopping=True)
 
-    # Predecir sobre validación
+    # Predict on validation set
     forecast = model.predict(df_test)
 
-    # Calcular MAE
+    # Calculate MAE
     mae = mean_absolute_error(df_test['y'].values, forecast['yhat1'].values)
     return mae

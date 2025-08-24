@@ -9,7 +9,7 @@ class NeuralProphetWrapper(mlflow.pyfunc.PythonModel):
         self.model = model
 
     def predict(self, context: Any, model_input: pd.DataFrame) -> pd.DataFrame:
-        # model_input debe tener al menos la columna 'ds' (y las regresoras si aplican)
+        # model_input must contain at least the 'ds' column (and regressors if applicable)
         fcst = self.model.predict(model_input)
         yhat_cols = [c for c in fcst.columns if c.startswith("yhat")]
         fcst[yhat_cols] = fcst[yhat_cols].clip(lower=0)
