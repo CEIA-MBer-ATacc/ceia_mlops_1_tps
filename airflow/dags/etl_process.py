@@ -3,19 +3,19 @@ import datetime
 from airflow.decorators import dag, task
 
 markdown_text = """
-### ETL para datos de Empresa Línea 216 S.A.T. en base a información de ACTrans
+### ETL for Empresa Línea 216 S.A.T. data based on ACTrans information
 
-Este DAG extrae la información de un archivo Excel en Google Drive donde cada hoja
-contiene los datos entre 2020 y 2025 de cada línea de la Empresa Línea 216 S.A.T.
+This DAG extracts data from an Excel file on Google Drive where each sheet
+contains the 2020-2025 data for each line of Empresa Línea 216 S.A.T.
 
-Procesa los datos imputando valores nulos, eliminando outliers por la mediana, y guardando
-el preprocesamiento en archivos CSV (uno por cada línea) en un bucket de S3
+It processes the data by imputing missing values, removing outliers using the median,
+and saving the preprocessed data as CSV files (one per line) in an S3 bucket.
 
-Luego separa cada CSV en entrenamiento y test, en proporciones 80/20 teniendo en cuenta
-que al ser series temporales la separación debe ser partir de una fecha de manera ordenada.
+Then, it splits each CSV into training and test sets with an 80/20 ratio, taking into account
+that for time series the split should be done chronologically starting from a specific date.
 
-Además, solo se tienen en cuenta los datos a partir del 01/01/2022 para excluir datos atípicos
-ocurridos durante la pandemia de COVID-19.
+Additionally, only data from 01/01/2022 onwards is considered to exclude atypical data
+that occurred during the COVID-19 pandemic.
 """
 
 default_args = {
@@ -29,7 +29,7 @@ default_args = {
 
 @dag(
     dag_id="process_etl_actrans_data",
-    description="",
+    description="ETL DAG for ACTrans line data",
     doc_md=markdown_text,
     tags=["ETL", "Empresa Línea 216 S.A.T. (ACTrans Data)"],
     default_args=default_args,
@@ -69,52 +69,51 @@ def process_etl_actrans_data():
         import awswrangler as wr
         import pandas as pd
 
-        data_original_path = "s3://data/raw/trx_recaudacion_km_empresa_54_2020_2025.xlsx"
-        data_end_path = "s3://data/processed/{}/data.csv"
-        sheets = wr.s3.read_excel(data_original_path, sheet_name=None)
+        original_data_path = "s3://data/raw/trx_recaudacion_km_empresa_54_2020_2025.xlsx"
+        processed_data_path = "s3://data/processed/{}/data.csv"
+        sheets = wr.s3.read_excel(original_data_path, sheet_name=None)
 
-        lineas_dfs = {}
+        line_dfs = {}
 
-        for nombre_hoja, df in sheets.items():
-            lineas_dfs[nombre_hoja] = df
+        for sheet_name, df in sheets.items():
+            line_dfs[sheet_name] = df
 
-        for linea, df in lineas_dfs.items():
+        for line, df in line_dfs.items():
             df['FECHA'] = pd.to_datetime(df['FECHA'])
-            # Completamos valores nulos en CANT. TRX, y KM
+            # Fill missing values in TRX_COUNT and KM
             df['CANT. TRX'] = df['CANT. TRX'].ffill()
             df['KM'] = df['KM'].ffill()
-            # Borramos columna de RECAUDACIÓN porque no está ajustada
-            # por inflación y no es comparable
+            # Drop REVENUE column because it's not inflation-adjusted and not comparable
             df.drop(columns=['RECAUDACION'], inplace=True, errors='ignore')
-            # Reordenar columnas
-            columnas = ['FECHA', 'CANT. TRX', 'KM']
-            df = df[columnas]
+            # Reorder columns
+            columns = ['FECHA', 'CANT. TRX', 'KM']
+            df = df[columns]
             df.rename(columns={'FECHA': 'ds', 'CANT. TRX': 'y', 'KM': 'km'}, inplace=True)
-            lineas_dfs[linea] = df
+            line_dfs[line] = df
 
 
-        def reemplazar_outliers_por_mediana(df, columnas):
+        def replace_outliers_with_median(df, columns):
             df = df.copy()
-            for col in columnas:
+            for col in columns:
                 Q1 = df[col].quantile(0.25)
                 Q3 = df[col].quantile(0.75)
-                mediana = df[col].quantile(0.5)
+                median = df[col].quantile(0.5)
                 IQR = Q3 - Q1
-                limite_inferior = Q1 - 1.5 * IQR
-                limite_superior = Q3 + 1.5 * IQR
-                mask_outlier = (df[col] < limite_inferior) | (df[col] > limite_superior)
-                df.loc[mask_outlier, col] = mediana
+                lower_limit = Q1 - 1.5 * IQR
+                upper_limit = Q3 + 1.5 * IQR
+                mask_outlier = (df[col] < lower_limit) | (df[col] > upper_limit)
+                df.loc[mask_outlier, col] = median
             return df
 
-        columnas_a_filtrar = ['y', 'km']
+        columns_to_filter = ['y', 'km']
 
-        lineas_dfs = {
-            linea: reemplazar_outliers_por_mediana(df, columnas_a_filtrar)
-            for linea, df in lineas_dfs.items()
+        line_dfs = {
+            line: replace_outliers_with_median(df, columns_to_filter)
+            for line, df in line_dfs.items()
         }
 
-        for linea, df in lineas_dfs.items():
-            wr.s3.to_csv(df=df, path=data_end_path.format(linea), index=False)
+        for line, df in line_dfs.items():
+            wr.s3.to_csv(df=df, path=processed_data_path.format(line), index=False)
 
     @task.virtualenv(
         task_id="split_dataset",
@@ -138,26 +137,25 @@ def process_etl_actrans_data():
         )
 
         sheets = wr.s3.read_excel(raw_data_path, sheet_name=None)
-        lineas = sheets.keys()
+        lines = sheets.keys()
 
-        for linea in lineas:
-            # Ordenar por fecha
-            df = wr.s3.read_csv(processed_data_path.format(linea))
+        for line in lines:
+            # Sort by date
+            df = wr.s3.read_csv(processed_data_path.format(line))
             df['ds'] = pd.to_datetime(df['ds'])
-            df = df.set_index('ds', drop=False)  # establecer ds como índice
+            df = df.set_index('ds', drop=False)
             df = df[df.index >= start_date].sort_index()
 
-            # Obtener fecha de corte (80%)
-            # Convertir fechas a enteros para usar quantile, luego volver a datetime
-            fechas_numeric = df.index.view('int64')
-            fecha_corte_ts = pd.Series(fechas_numeric).quantile(0.8)
-            fecha_corte = pd.to_datetime(fecha_corte_ts)
+            # Get cutoff date (80%)
+            numeric_dates = df.index.view('int64')
+            cutoff_ts = pd.Series(numeric_dates).quantile(0.8)
+            cutoff_date = pd.to_datetime(cutoff_ts)
 
-            # Dividir el DataFrame
-            df_train = df[df.index <= fecha_corte]  # 80%
-            df_test = df[df.index > fecha_corte]   # 20%
-            wr.s3.to_csv(df=df_train, path=train_data_path.format(linea), index=False)
-            wr.s3.to_csv(df=df_test, path=test_data_path.format(linea), index=False)
+            # Split DataFrame
+            df_train = df[df.index <= cutoff_date]  # 80%
+            df_test = df[df.index > cutoff_date]   # 20%
+            wr.s3.to_csv(df=df_train, path=train_data_path.format(line), index=False)
+            wr.s3.to_csv(df=df_test, path=test_data_path.format(line), index=False)
 
 
     get_dataset() >> process_dataset() >> split_dataset()
